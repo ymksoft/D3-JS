@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>D3</title>
+    <!-- <script src="d3/d3.min.js"></script> -->
+    <script src="https://d3js.org/d3.v3.js"></script>
+    <style>
+        body {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: white;
+            margin: 0;
+            padding: 0;
+        }
+        svg {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 100%;
+        }
+        circle {
+            fill: orange;
+            stroke: white;
+        }
+        line {
+            stroke: #fff;
+            stroke-width: 1.5;
+        }
+    </style>
+
+</head>
+<body>
+    <svg>
+       <!--  <circle r="50" cx="100" cy="100"></circle> -->
+    </svg>
+</body>
+
+<script>
+
+/*     const coords = [
+        { cx: 50, cy: 50},
+        { cx:350, cy:350}
+        ];
+
+    circles.enter().append('circle')
+            .attr('r',50)
+            .attr('cx', function(d, i){ return d.cx})
+            .attr('cy', function(d, i){ return d.cy}); */
+
+    let segment = 20;
+    let depth = 7;
+
+    let n = segment * depth;
+    let rSmall = 3;
+    
+    let step = ( 2 * Math.PI ) / segment; 
+
+    const points = d3.range(n);
+    const coords = [];
+
+    const height = window.innerHeight;
+    const width = window.innerWidth;
+    let radius = Math.min(width,height) / 2 - rSmall*2;
+
+    let origin = {
+        x: width / 2,
+        y: height / 2
+    };
+
+    let radiusStep = radius / n;
+
+    let webNodes = [], webLinks = [];
+
+    points.forEach( function(p, i) {
+
+        let angle = i * step;
+        
+        let shRadius = radius - i * radiusStep;
+
+        coords.push( { 
+            cx: origin.x + shRadius * Math.cos( angle ), 
+            cy: origin.y + shRadius * Math.sin( angle )
+            });
+
+        webLinks.push( {
+            source: i,
+            target: i + 1
+        });
+
+    });
+
+    const svg = d3.select('svg');
+    
+    let web = d3.layout.force()
+        // сила связей
+        .linkStrength(1.0)  
+        // трение
+        .friction(0.9)      
+        // расстояние дейсвтия сил
+        .linkDistance(-10)  
+        // заряд
+        .charge(-50)
+        // взаимодействие между центром и точками
+        .gravity(.07)
+        // точность симуляции
+        .theta(0.8)
+        // прогресс работы, 0 = stop
+        .alpha(0.1)
+        .on('tick', tick);
+    
+    
+
+    web.size([width,height]);
+
+    const underlay = svg.append('g');
+    const rect = underlay.selectAll('rect').data([1]);
+    rect.enter().append('rect').style('fill','#454545')
+        .attr('width',width)
+        .attr('height',height);
+
+    const circles = svg.selectAll('circle').data(coords);
+    circles.enter().append('circle')
+            .attr('r',rSmall)
+            .attr('cx', function(d, i){ return d.cx})
+            .attr('cy', function(d, i){ return d.cy});
+
+    let svgWebLinks = underlay.selectAll('line').data(webLinks);
+    svgWebLinks.enter().append('line');
+
+    web
+        .nodes(coords)
+        .links(webLinks)
+        .start();
+
+    function tick() {
+        svgWebLinks
+            .attr('x1' , function(d) { return d.source.x } )
+            .attr('y1' , function(d) { return d.source.y } )
+            .attr('x2' , function(d) { return d.target.x } )
+            .attr('y2' , function(d) { return d.target.y } );
+        
+        circles
+            .attr('cx', function(d) { return d.x } )
+            .attr('cy', function(d) { return d.y } );
+    }
+
+    /* const c = svg.append("circle");
+    c.attr("r",50);
+    c.attr("cx",100);
+    c.attr("cy",100); */
+</script>
+
+</html>
